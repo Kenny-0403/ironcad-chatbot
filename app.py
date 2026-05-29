@@ -33,12 +33,20 @@ def ask_dify(user_message, user_id):
         "conversation_id": ""
     }
     try:
-        response = requests.post(DIFY_API_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(DIFY_API_URL, headers=headers, json=payload, timeout=60)
         if response.status_code == 200:
-            return response.json().get("answer", "抱歉，我無法處理您的問題，請稍後再試。")
+            data = response.json()
+            answer = (
+                data.get("answer") or
+                data.get("outputs", {}).get("answer") or
+                data.get("outputs", {}).get("text") or
+                data.get("data", {}).get("outputs", {}).get("answer") or
+                "抱歉，我無法處理您的問題，請稍後再試。"
+            )
+            return answer
         else:
             return "系統暫時無法回應，請稍後再試或直接聯繫工程師。"
-    except Exception:
+    except Exception as e:
         return "系統連線異常，請稍後再試。"
 
 @app.route("/webhook", methods=["POST"])
